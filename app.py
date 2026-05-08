@@ -4,7 +4,7 @@ import re
 import datetime
 
 # 設定頁面資訊
-st.set_page_config(page_title="即時日幣匯率計算機", page_icon="💴", layout="centered")
+st.set_page_config(page_title="日本旅遊記帳神器", page_icon="💴", layout="centered")
 
 # 注入自訂的 CSS，結合極致的玻璃擬物設計 (Glassmorphism) 與新功能介面
 st.markdown("""
@@ -298,7 +298,7 @@ def calculate():
         pass # 算式不完整時不更新結果
 
 # --- 介面繪製 ---
-st.markdown("<div align='center'><h2 style='color: white; margin-bottom: 20px;'>💴 即時日幣轉換器</h2></div>", unsafe_allow_html=True)
+st.markdown("<div align='center'><h2 style='color: white; margin-bottom: 20px;'>💴 日本旅遊記帳神器</h2></div>", unsafe_allow_html=True)
 
 # 顯示目前的即時匯率標籤
 st.markdown(f'<div align="center"><div class="rate-badge">🟢 即時匯率：1 JPY = {exchange_rate:.4f} TWD</div></div>', unsafe_allow_html=True)
@@ -434,5 +434,4 @@ else:
         
         st.info("👇 請點擊下方區塊右上角的複製圖示")
         st.code(export_text, language="markdown")
-
 
