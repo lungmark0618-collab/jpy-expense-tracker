@@ -242,14 +242,40 @@ def button_click(val):
         calculate()
         # 將當前算式中的項目存入明細
         if st.session_state.expr:
-            items = re.findall(r'(\d+(?:\.\d+)?)(?:\((.*?)\))?', st.session_state.expr)
+            # 1. 根據 + 或 - 切割算式 (保留正負號在段落開頭)
+            # 條件：+ 或 - 的前面必須是數字或右括號 ')'，避免把 '*-' 或字首的 '-' 切斷
+            segments = re.split(r'(?<=[0-9)])(?=[+-])', st.session_state.expr)
             current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-            for amount, note_text in items:
-                st.session_state.shopping_list.append({
-                    "時間 (可修改)": current_time,
-                    "項目 (可修改)": note_text if note_text else "未分類",
-                    "日幣金額": float(amount)
-                })
+            
+            for seg in segments:
+                if not seg: continue
+                # 2. 抓取這段算式中的所有備註
+                notes = re.findall(r'\((.*?)\)', seg)
+                # 3. 移除備註，留下純數學算式
+                math_part = re.sub(r'\(.*?\)', '', seg)
+                # 4. 清理不合法字元
+                sanitized = re.sub(r'[^0-9+\-*/.]', '', math_part)
+                
+                if not sanitized or sanitized in ['+', '-', '*', '/']:
+                    continue
+                    
+                try:
+                    amount = eval(sanitized)
+                    
+                    # 決定最後的分類名稱 (優先找裡面有字的備註)
+                    final_note = "未分類"
+                    for n in notes:
+                        if n.strip():
+                            final_note = n
+                            break
+                            
+                    st.session_state.shopping_list.append({
+                        "時間 (可修改)": current_time,
+                        "項目 (可修改)": final_note,
+                        "日幣金額": float(amount)
+                    })
+                except Exception:
+                    pass
             # 清空算式，讓下一筆重新開始 (但畫面上的 JPY 和 TWD 總額會保留)
             st.session_state.expr = ""
             st.session_state.show_export = False # 計算後隱藏匯出區域
