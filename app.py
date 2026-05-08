@@ -408,93 +408,125 @@ with col4:
 # 將等於按鈕獨立出來，做成超級大按鈕
 st.button("=", type="primary", use_container_width=True, on_click=button_click, args=('=',))
 
-# --- 購物清單明細 (記帳功能) ---
+# --- 購物清單明細與分帳功能 ---
 st.markdown("---")
-st.markdown("<h3 style='color: #f8fafc; font-size: 1.2rem;'>🧾 購物清單明細 (可直接點擊表格編輯/刪除/新增)</h3>", unsafe_allow_html=True)
+tab1, tab2 = st.tabs(["🧾 購物明細", "👥 分帳小幫手"])
 
-if not st.session_state.shopping_list:
-    st.markdown("<div style='color: #64748b;'>目前還沒有項目喔！請在上方輸入金額與備註後，按下「=」將項目加入明細。</div>", unsafe_allow_html=True)
-else:
-    # 準備顯示用的清單 (動態計算台幣)
-    display_list = []
-    for item in st.session_state.shopping_list:
-        display_item = item.copy()
-        if item.get("日幣金額") is not None:
-            display_item["台幣金額 (約略)"] = int(round(item["日幣金額"] * exchange_rate))
-        else:
-            display_item["台幣金額 (約略)"] = None
-        display_list.append(display_item)
-        
-    # 使用 st.data_editor 讓表格可編輯
-    edited_list = st.data_editor(
-        display_list,
-        num_rows="dynamic",
-        use_container_width=True,
-        hide_index=True,
-        column_config={
-            "時間 (可修改)": st.column_config.TextColumn(
-                "時間",
-                width="small"
-            ),
-            "項目 (可修改)": st.column_config.TextColumn(
-                "項目 (可修改)",
-                required=True
-            ),
-            "日幣金額": st.column_config.NumberColumn(
-                "日幣金額",
-                min_value=0,
-                format="¥ %d",
-                required=True
-            ),
-            "台幣金額 (約略)": st.column_config.NumberColumn(
-                "台幣 (參考)",
-                format="NT$ %d",
-                disabled=True # 台幣是動態算出來的，不開放修改
-            )
-        }
-    )
-    
-    # 將編輯後的清單存回 session_state (只存日幣原始資料)
-    new_shopping_list = []
-    for item in edited_list:
-        new_shopping_list.append({
-            "時間 (可修改)": item.get("時間 (可修改)", ""),
-            "項目 (可修改)": item.get("項目 (可修改)", "未分類"),
-            "日幣金額": item.get("日幣金額")
-        })
-    st.session_state.shopping_list = new_shopping_list
-    
-    # 加總所有購物清單的金額
-    total_jpy = sum(item["日幣金額"] for item in edited_list if item.get("日幣金額") is not None)
-    total_twd = int(round(total_jpy * exchange_rate))
-    
-    st.markdown(f"<div style='margin-top: 15px; padding: 15px; background: rgba(56,189,248,0.1); border-radius: 10px; border: 1px solid rgba(56,189,248,0.3);'>"
-                f"<h4 style='color: #38bdf8; margin:0;'>💰 清單總計：¥ {int(total_jpy):,} <span style='font-size: 1rem; color: #94a3b8;'>(約 NT$ {total_twd:,})</span></h4>"
-                f"</div>", unsafe_allow_html=True)
-
-    st.markdown("<br>", unsafe_allow_html=True)
-    if st.button("📋", help="產生純文字明細，方便一鍵複製並貼上至手機備忘錄"):
-        st.session_state.show_export = True
-        
-    if st.session_state.get("show_export", False):
-        tz_str = st.session_state.get("tz_input", "🇯🇵 日本 (GMT+9)")
-        tz_offset = 9 if "日本" in tz_str else 8
-        tz = datetime.timezone(datetime.timedelta(hours=tz_offset))
-        current_date = datetime.datetime.now(tz).strftime('%Y-%m-%d')
-        
-        export_text = f"【日本旅遊記帳明細 | {current_date}】\n"
-        export_text += "-" * 25 + "\n"
+with tab1:
+    if not st.session_state.shopping_list:
+        st.markdown("<div style='color: #64748b; margin-top: 10px;'>目前還沒有項目喔！請在上方輸入金額與備註後，按下「=」將項目加入明細。</div>", unsafe_allow_html=True)
+        total_jpy = 0
+        total_twd = 0
+    else:
+        # 準備顯示用的清單 (動態計算台幣)
+        display_list = []
         for item in st.session_state.shopping_list:
+            display_item = item.copy()
             if item.get("日幣金額") is not None:
-                twd = int(round(item["日幣金額"] * exchange_rate))
-                time_str = item.get("時間 (可修改)", "")
-                time_prefix = f"[{time_str.split()[-1]}] " if time_str else ""
-                export_text += f"{time_prefix}{item['項目 (可修改)']}: ¥{int(item['日幣金額'])} (NT${twd})\n"
-        export_text += "-" * 25 + "\n"
-        export_text += f"總計: ¥{int(total_jpy)} (約 NT${total_twd})\n"
+                display_item["台幣金額 (約略)"] = int(round(item["日幣金額"] * exchange_rate))
+            else:
+                display_item["台幣金額 (約略)"] = None
+            display_list.append(display_item)
+            
+        # 使用 st.data_editor 讓表格可編輯
+        edited_list = st.data_editor(
+            display_list,
+            num_rows="dynamic",
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                "時間 (可修改)": st.column_config.TextColumn(
+                    "時間",
+                    width="small"
+                ),
+                "項目 (可修改)": st.column_config.TextColumn(
+                    "項目 (可修改)",
+                    required=True
+                ),
+                "日幣金額": st.column_config.NumberColumn(
+                    "日幣金額",
+                    min_value=0,
+                    format="¥ %d",
+                    required=True
+                ),
+                "台幣金額 (約略)": st.column_config.NumberColumn(
+                    "台幣 (參考)",
+                    format="NT$ %d",
+                    disabled=True # 台幣是動態算出來的，不開放修改
+                )
+            }
+        )
         
-        st.info("👇 請點擊下方區塊右上角的複製圖示")
-        st.code(export_text, language="markdown")
+        # 將編輯後的清單存回 session_state (只存日幣原始資料)
+        new_shopping_list = []
+        for item in edited_list:
+            new_shopping_list.append({
+                "時間 (可修改)": item.get("時間 (可修改)", ""),
+                "項目 (可修改)": item.get("項目 (可修改)", "未分類"),
+                "日幣金額": item.get("日幣金額")
+            })
+        st.session_state.shopping_list = new_shopping_list
+        
+        # 加總所有購物清單的金額
+        total_jpy = sum(item["日幣金額"] for item in edited_list if item.get("日幣金額") is not None)
+        total_twd = int(round(total_jpy * exchange_rate))
+        
+        st.markdown(f"<div style='margin-top: 15px; padding: 15px; background: rgba(56,189,248,0.1); border-radius: 10px; border: 1px solid rgba(56,189,248,0.3);'>"
+                    f"<h4 style='color: #38bdf8; margin:0;'>💰 清單總計：¥ {int(total_jpy):,} <span style='font-size: 1rem; color: #94a3b8;'>(約 NT$ {total_twd:,})</span></h4>"
+                    f"</div>", unsafe_allow_html=True)
+    
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("📋 複製純文字明細", help="產生純文字明細，方便一鍵複製並貼上至手機備忘錄"):
+            st.session_state.show_export = True
+            
+        if st.session_state.get("show_export", False):
+            tz_str = st.session_state.get("tz_input", "🇯🇵 日本 (GMT+9)")
+            tz_offset = 9 if "日本" in tz_str else 8
+            tz = datetime.timezone(datetime.timedelta(hours=tz_offset))
+            current_date = datetime.datetime.now(tz).strftime('%Y-%m-%d')
+            
+            export_text = f"【日本旅遊記帳明細 | {current_date}】\n"
+            export_text += "-" * 25 + "\n"
+            for item in st.session_state.shopping_list:
+                if item.get("日幣金額") is not None:
+                    twd = int(round(item["日幣金額"] * exchange_rate))
+                    time_str = item.get("時間 (可修改)", "")
+                    time_prefix = f"[{time_str.split()[-1]}] " if time_str else ""
+                    export_text += f"{time_prefix}{item['項目 (可修改)']}: ¥{int(item['日幣金額'])} (NT${twd})\n"
+            export_text += "-" * 25 + "\n"
+            export_text += f"總計: ¥{int(total_jpy)} (約 NT${total_twd})\n"
+            
+            st.info("👇 請點擊下方區塊右上角的複製圖示")
+            st.code(export_text, language="markdown")
+
+with tab2:
+    if not st.session_state.shopping_list or total_jpy == 0:
+        st.markdown("<div style='color: #64748b; margin-top: 10px;'>請先在「購物明細」加入金額，再來使用分帳小幫手喔！</div>", unsafe_allow_html=True)
+    else:
+        st.markdown(f"<div style='margin-bottom: 15px; margin-top: 10px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);'>"
+                    f"<p style='margin:0; color: #cbd5e1; font-size: 0.9rem;'>目前總計金額</p>"
+                    f"<h4 style='color: #38bdf8; margin: 5px 0 0 0;'>¥ {int(total_jpy):,} <span style='font-size: 1rem; color: #94a3b8;'>(約 NT$ {total_twd:,})</span></h4>"
+                    f"</div>", unsafe_allow_html=True)
+                    
+        split_num = st.number_input("👥 請輸入平分人數", min_value=1, value=2, step=1)
+        
+        if split_num > 1:
+            per_person_jpy = int(round(total_jpy / split_num))
+            per_person_twd = int(round(total_twd / split_num))
+            
+            st.markdown(f"<div style='margin-top: 15px; padding: 20px; background: rgba(244,114,182,0.1); border-radius: 10px; border: 1px solid rgba(244,114,182,0.3); text-align: center;'>"
+                        f"<p style='margin:0; color: #f472b6; font-size: 1rem; font-weight: bold;'>👉 每人需支付</p>"
+                        f"<h3 style='color: #f8fafc; margin: 10px 0 0 0; font-size: 1.8rem;'>¥ {per_person_jpy:,}</h3>"
+                        f"<p style='margin: 5px 0 0 0; color: #94a3b8; font-size: 1.1rem;'>約 NT$ {per_person_twd:,}</p>"
+                        f"</div>", unsafe_allow_html=True)
+                        
+            st.write("")
+            if st.button("💬 產生 LINE 請款訊息", use_container_width=True):
+                msg = f"大家！剛剛那頓總共是 ¥{int(total_jpy):,} (約 NT${total_twd:,})，平分成 {split_num} 人的話，每人要給我 👉【 ¥{per_person_jpy:,} 】 (或台幣 NT${per_person_twd:,}) 喔！"
+                st.info("👇 請點擊右上角複製，直接貼到 LINE 群組！")
+                st.code(msg, language="markdown")
+        elif split_num == 1:
+            st.markdown("<div style='color: #64748b; text-align: center; margin-top: 20px;'>只有 1 個人不需要分帳啦！😆</div>", unsafe_allow_html=True)
 
 # --- ☕ 贊助開發者 (Ko-fi 按鈕) ---
 st.markdown("""
