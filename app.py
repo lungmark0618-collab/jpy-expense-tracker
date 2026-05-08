@@ -496,3 +496,29 @@ else:
         st.info("👇 請點擊下方區塊右上角的複製圖示")
         st.code(export_text, language="markdown")
 
+# --- ☕ 贊助開發者 (Ko-fi 按鈕) ---
+st.markdown("""
+<div align="center" style="margin-top: 50px; margin-bottom: 20px;">
+    <a href="https://ko-fi.com/marklung" target="_blank" style="text-decoration: none;">
+        <div style="
+            background: linear-gradient(135deg, rgba(255, 94, 91, 0.2) 0%, rgba(255, 26, 140, 0.2) 100%);
+            border: 1px solid rgba(255, 94, 91, 0.4);
+            backdrop-filter: blur(10px);
+            color: #f8fafc;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 10px 20px -5px rgba(255, 94, 91, 0.3);
+        " onmouseover="this.style.transform='translateY(-3px)'; this.style.background='linear-gradient(135deg, rgba(255, 94, 91, 0.4) 0%, rgba(255, 26, 140, 0.4) 100%)';" onmouseout="this.style.transform='translateY(0)'; this.style.background='linear-gradient(135deg, rgba(255, 94, 91, 0.2) 0%, rgba(255, 26, 140, 0.2) 100%)';">
+            <span style="font-size: 1.4rem;">☕</span>
+            <span>如果這個神器幫到了你，請我喝杯咖啡吧！</span>
+        </div>
+    </a>
+</div>
+""", unsafe_allow_html=True)
