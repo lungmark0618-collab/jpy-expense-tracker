@@ -336,7 +336,8 @@ with st.expander("💡 第一次使用？點我查看操作教學"):
     **✅ 如何修改或刪除明細？**
     - 往下捲動到「🧾 購物明細」分頁，你可以**直接點擊表格**來修改項目名稱或日幣金額。
     - 台幣金額會根據你修改的日幣**自動重新計算**。
-    - 點選表格某一行，按下 `Delete` 鍵（或手機版點擊刪除圖示）即可刪除該筆紀錄。
+    - **要刪除單筆明細時，請「勾選表格最左邊的框框」，表格右上角就會出現「垃圾桶圖示🗑️」，點下去就能刪除囉！**
+    - 如果想重頭來過，也可以直接點擊表格下方的「🗑️ 清空全部」按鈕。
     
     **✅ 如何跟朋友分帳？**
     - 點擊切換到最下方的 **「👥 分帳小幫手」** 分頁。
@@ -510,8 +511,14 @@ with tab1:
                     f"</div>", unsafe_allow_html=True)
     
         st.markdown("<br>", unsafe_allow_html=True)
-        if st.button("📋 複製純文字明細", help="產生純文字明細，方便一鍵複製並貼上至手機備忘錄"):
-            st.session_state.show_export = True
+        col_btn1, col_btn2 = st.columns(2, gap="small")
+        with col_btn1:
+            if st.button("📋 複製明細", help="產生純文字明細，方便一鍵複製並貼上至手機備忘錄", use_container_width=True):
+                st.session_state.show_export = True
+        with col_btn2:
+            if st.button("🗑️ 清空全部", help="一鍵刪除所有的記帳明細", use_container_width=True):
+                st.session_state.shopping_list = []
+                st.rerun()
             
         if st.session_state.get("show_export", False):
             tz_str = st.session_state.get("tz_input", "🇯🇵 日本 (GMT+9)")
