@@ -137,6 +137,45 @@ button[data-testid="stBaseButton-primary"]:hover {
     box-shadow: 0 10px 15px -3px rgba(56, 189, 248, 0.4);
 }
 
+/* ================= 手機版響應式優化 (Responsive Design) ================= */
+@media (max-width: 600px) {
+    /* 讓 Streamlit 的 columns 在手機上「強制保持橫排」，絕對不要變成垂直堆疊 */
+    [data-testid="stHorizontalBlock"] {
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        gap: 0.5rem !important;
+    }
+    
+    /* 讓每一個 column 在橫排時能平均縮放 */
+    [data-testid="stColumn"] {
+        width: auto !important;
+        flex: 1 1 0% !important;
+        min-width: 0 !important;
+    }
+
+    /* 手機版：計算機卡片縮小邊距，最大化可視空間 */
+    [data-testid="block-container"] {
+        padding: 15px 10px !important;
+        border-radius: 20px !important;
+        margin: 10px auto !important;
+        border: none !important; /* 手機上移除多餘邊框 */
+    }
+
+    /* 手機版：螢幕字體稍微縮小 */
+    .screen-jpy { font-size: 2.8rem; }
+    .screen-twd { font-size: 1.5rem; }
+    .screen-expr { font-size: 1.1rem; }
+
+    /* 手機版：按鈕稍微變矮、字體稍微縮小，確保 4 欄塞得下 */
+    [data-testid="stColumn"] button[data-testid^="stBaseButton"],
+    button[data-testid="stBaseButton-primary"] {
+        min-height: 60px;
+        font-size: 1.5rem !important;
+        padding: 0 !important;
+    }
+}
+
+
 /* 快速按鈕縮小一點 */
 .quick-btn button {
     min-height: 60px !important;
@@ -395,4 +434,5 @@ else:
         
         st.info("👇 請點擊下方區塊右上角的複製圖示")
         st.code(export_text, language="markdown")
+
 
