@@ -478,15 +478,28 @@ with tab1:
             }
         )
         
-        # 將編輯後的清單存回 session_state (只存日幣原始資料)
+        # 將編輯後的清單存回 session_state (並檢查是否需要重新計算台幣)
+        needs_rerun = False
         new_shopping_list = []
         for item in edited_list:
+            jpy = item.get("日幣金額")
+            old_twd = item.get("台幣金額 (約略)")
+            
+            if jpy is not None:
+                new_twd = int(round(jpy * exchange_rate))
+                if old_twd != new_twd:
+                    needs_rerun = True
+            
             new_shopping_list.append({
                 "時間 (可修改)": item.get("時間 (可修改)", ""),
                 "項目 (可修改)": item.get("項目 (可修改)", "未分類"),
-                "日幣金額": item.get("日幣金額")
+                "日幣金額": jpy
             })
+            
         st.session_state.shopping_list = new_shopping_list
+        
+        if needs_rerun:
+            st.rerun()
         
         # 加總所有購物清單的金額
         total_jpy = sum(item["日幣金額"] for item in edited_list if item.get("日幣金額") is not None)
