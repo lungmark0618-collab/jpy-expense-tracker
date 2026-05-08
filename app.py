@@ -240,45 +240,41 @@ def button_click(val):
         calculate()
     elif val == '=':
         calculate()
-        # 將當前算式中的項目存入明細
+        # 直接抓取算完的總金額進明細
         if st.session_state.expr:
-            # 1. 根據 + 或 - 切割算式 (保留正負號在段落開頭)
-            # 條件：+ 或 - 的前面必須是數字或右括號 ')'，避免把 '*-' 或字首的 '-' 切斷
-            segments = re.split(r'(?<=[0-9)])(?=[+-])', st.session_state.expr)
             current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-            
-            for seg in segments:
-                if not seg: continue
-                # 2. 抓取這段算式中的所有備註
-                notes = re.findall(r'\((.*?)\)', seg)
-                # 3. 移除備註，留下純數學算式
-                math_part = re.sub(r'\(.*?\)', '', seg)
-                # 4. 清理不合法字元
-                sanitized = re.sub(r'[^0-9+\-*/.]', '', math_part)
+            try:
+                # 1. 取得計算機畫面上最終的總結果 (去掉千分位逗號)
+                final_amount = float(st.session_state.jpy_result.replace(',', ''))
                 
-                if not sanitized or sanitized in ['+', '-', '*', '/']:
-                    continue
-                    
-                try:
-                    amount = eval(sanitized)
-                    
-                    # 決定最後的分類名稱 (優先找裡面有字的備註)
-                    final_note = "未分類"
-                    for n in notes:
-                        if n.strip():
-                            final_note = n
-                            break
-                            
-                    st.session_state.shopping_list.append({
-                        "時間 (可修改)": current_time,
-                        "項目 (可修改)": final_note,
-                        "日幣金額": float(amount)
-                    })
-                except Exception:
-                    pass
-            # 清空算式，讓下一筆重新開始 (但畫面上的 JPY 和 TWD 總額會保留)
+                # 2. 決定這個總金額的名稱：
+                # 找出算式裡所有的備註 (例如 100(衣服)+200(褲子))
+                notes = re.findall(r'\((.*?)\)', st.session_state.expr)
+                
+                if notes:
+                    # 過濾空白並「去除重複」的備註，例如 ['購物', '購物'] 變成 ['購物']
+                    valid_notes = list(dict.fromkeys([n for n in notes if n.strip()]))
+                    final_note = "、".join(valid_notes) if valid_notes else "未分類"
+                else:
+                    # 如果算式裡完全沒有括號，就抓畫面上目前的下拉選單與輸入框
+                    cat = st.session_state.get('cat_input', '')
+                    raw_note = st.session_state.get('note_input', '')
+                    final_note = f"{cat}-{raw_note}" if raw_note else cat
+                    if not final_note:
+                        final_note = "未分類"
+                        
+                st.session_state.shopping_list.append({
+                    "時間 (可修改)": current_time,
+                    "項目 (可修改)": final_note,
+                    "日幣金額": final_amount
+                })
+            except Exception:
+                pass
+                
+            # 清空算式與備註，讓下一筆重新開始
             st.session_state.expr = ""
             st.session_state.show_export = False # 計算後隱藏匯出區域
+            st.session_state.note_input = ""
     elif val in ['+1000', '+5000', '+10000']:
         # 快速加總，也可以一併帶入備註
         num = val.replace('+', '')
