@@ -11,7 +11,7 @@ st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
 
-html, body, [class*="st-"] {
+html, body {
     font-family: 'Outfit', sans-serif;
 }
 
@@ -415,9 +415,19 @@ st.markdown("<h3 style='color: #f8fafc; font-size: 1.2rem;'>🧾 購物清單明
 if not st.session_state.shopping_list:
     st.markdown("<div style='color: #64748b;'>目前還沒有項目喔！請在上方輸入金額與備註後，按下「=」將項目加入明細。</div>", unsafe_allow_html=True)
 else:
+    # 準備顯示用的清單 (動態計算台幣)
+    display_list = []
+    for item in st.session_state.shopping_list:
+        display_item = item.copy()
+        if item.get("日幣金額") is not None:
+            display_item["台幣金額 (約略)"] = int(round(item["日幣金額"] * exchange_rate))
+        else:
+            display_item["台幣金額 (約略)"] = None
+        display_list.append(display_item)
+        
     # 使用 st.data_editor 讓表格可編輯
     edited_list = st.data_editor(
-        st.session_state.shopping_list,
+        display_list,
         num_rows="dynamic",
         use_container_width=True,
         hide_index=True,
@@ -435,12 +445,24 @@ else:
                 min_value=0,
                 format="¥ %d",
                 required=True
+            ),
+            "台幣金額 (約略)": st.column_config.NumberColumn(
+                "台幣 (參考)",
+                format="NT$ %d",
+                disabled=True # 台幣是動態算出來的，不開放修改
             )
         }
     )
     
-    # 將編輯後的清單存回 session_state
-    st.session_state.shopping_list = edited_list
+    # 將編輯後的清單存回 session_state (只存日幣原始資料)
+    new_shopping_list = []
+    for item in edited_list:
+        new_shopping_list.append({
+            "時間 (可修改)": item.get("時間 (可修改)", ""),
+            "項目 (可修改)": item.get("項目 (可修改)", "未分類"),
+            "日幣金額": item.get("日幣金額")
+        })
+    st.session_state.shopping_list = new_shopping_list
     
     # 加總所有購物清單的金額
     total_jpy = sum(item["日幣金額"] for item in edited_list if item.get("日幣金額") is not None)
