@@ -242,7 +242,11 @@ def button_click(val):
         calculate()
         # 直接抓取算完的總金額進明細
         if st.session_state.expr:
-            current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+            tz_str = st.session_state.get("tz_input", "🇯🇵 日本 (GMT+9)")
+            tz_offset = 9 if "日本" in tz_str else 8
+            tz = datetime.timezone(datetime.timedelta(hours=tz_offset))
+            current_time = datetime.datetime.now(tz).strftime("%Y-%m-%d %H:%M")
+            
             try:
                 # 1. 取得計算機畫面上最終的總結果 (去掉千分位逗號)
                 final_amount = float(st.session_state.jpy_result.replace(',', ''))
@@ -322,8 +326,17 @@ def calculate():
 # --- 介面繪製 ---
 st.markdown("<div align='center'><h2 style='color: white; margin-bottom: 20px;'>💴 日本旅遊記帳神器</h2></div>", unsafe_allow_html=True)
 
-# 顯示目前的即時匯率標籤
-st.markdown(f'<div align="center"><div class="rate-badge">🟢 即時匯率：1 JPY = {exchange_rate:.4f} TWD</div></div>', unsafe_allow_html=True)
+# 設定與顯示目前時間
+with st.expander("⚙️ 系統設定 (時區校正)"):
+    st.radio("選擇當地時區", ["🇯🇵 日本 (GMT+9)", "🇹🇼 台灣 (GMT+8)"], key="tz_input", horizontal=True)
+
+tz_str = st.session_state.get("tz_input", "🇯🇵 日本 (GMT+9)")
+tz_offset = 9 if "日本" in tz_str else 8
+tz = datetime.timezone(datetime.timedelta(hours=tz_offset))
+current_display_time = datetime.datetime.now(tz).strftime("%Y-%m-%d %H:%M")
+
+# 顯示目前的即時匯率標籤與系統時間
+st.markdown(f'<div align="center"><div class="rate-badge">🟢 匯率：1 JPY = {exchange_rate:.4f} TWD &nbsp;|&nbsp; 🕒 時間：{current_display_time}</div></div>', unsafe_allow_html=True)
 
 # 顯示螢幕
 st_expr = st.session_state.expr
@@ -442,7 +455,11 @@ else:
         st.session_state.show_export = True
         
     if st.session_state.get("show_export", False):
-        current_date = datetime.datetime.now().strftime('%Y-%m-%d')
+        tz_str = st.session_state.get("tz_input", "🇯🇵 日本 (GMT+9)")
+        tz_offset = 9 if "日本" in tz_str else 8
+        tz = datetime.timezone(datetime.timedelta(hours=tz_offset))
+        current_date = datetime.datetime.now(tz).strftime('%Y-%m-%d')
+        
         export_text = f"【日本旅遊記帳明細 | {current_date}】\n"
         export_text += "-" * 25 + "\n"
         for item in st.session_state.shopping_list:
